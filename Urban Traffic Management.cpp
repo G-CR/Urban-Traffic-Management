@@ -9,12 +9,12 @@
 #include "Urban Traffic Management.hpp"
 
 
-void build_map() { // 建图
+void build_sta() { // 建站
 	struct Bus_point bp;
 	FILE *fp;
 	char s[30];
 	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/bus_sta.txt", "r");
-	int t = 0;
+	bool t = 0;
 	if(fp != NULL) {
 		while(!feof(fp)) {
 			fscanf(fp, "%s", s);
@@ -28,8 +28,6 @@ void build_map() { // 建图
 				bp.sta_name = s;
 			}
 		}
-		
-		
 	}
 	else {
 		printf("文件打开失败!\n");
@@ -45,6 +43,6 @@ void build_map() { // 建图
 
 }
 
-void Bus_sta_add()  { // 站点添加
-	
+void build_map() {
+    
 }
