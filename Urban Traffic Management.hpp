@@ -12,11 +12,45 @@
 #include <stdio.h>
 #include <iostream>
 #include <cstring>
+#include <vector>
 using namespace std;
 
 #endif /* Urban_Traffic_Management_hpp */
 
-struct Bus_point {
-    string sta_name;
-    
+struct Bus_point { // 公交车站点信息
+    string sta_name; // 站点名称
+    vector<string> bus_num; // 公交车号
 };
+
+struct road_line {
+    struct Bus_point left, right; // 一条线路的左右段的站点
+    int cost; // 这条路线的长度
+};
+
+struct Bus_line { // 路线信息
+    string sta_name; // 经过站点名称
+    int sta_num; // 站点号码
+};
+
+vector <Bus_point> bus_point;
+
+vector <Bus_line> bus_line;
+
+
+// 用户管理
+
+
+
+/*----------------------------------------------*/
+void build_map(); // 建图
+
+// 站点管理
+void Bus_sta_add(); // 站点添加
+void Bus_sta_del(); // 站点删除
+
+
+// 线路管理
+
+
+
+// 查询功能
