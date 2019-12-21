@@ -38,6 +38,7 @@ int mp[100][100]; // 地图
 int dist[100], flag[100], pre[100];
 int num_of_sta, line_of_bus; // 站点个数, 公交线路个数
 
+
 void build_sta() { // 建站
 	struct Bus_point bp;
 	FILE *fp;
@@ -278,7 +279,7 @@ void ask_point() {
 void ask_line() {
 	string line_name;
 	int line_num;
-	printf("请输入你需要查询的线路:\n");
+	printf("请输入你需要查询的线路:");
 	cin >> line_name;
 	for(int i = 1;i <= line_of_bus; i++) {
 		if(line_name == name_hash[i]) {
@@ -294,13 +295,70 @@ void ask_line() {
 	}
 }
 
+void change_point() {
+	string point_name;
+	int point_num;
+	printf("请输入需要修改站点的名称: ");
+	cin >> point_name;
+	for(int i = 0;i < bus_point.size(); i++) {
+		if(point_name == bus_point[i].sta_name) {
+			point_num = i;
+			int choose;
+			char YN;
+			printf("1、为这个站点修改名称\n");
+			printf("2、修改这个站到另一个站点的距离\n");
+			scanf("%d", &choose);
+			
+			if(choose == 1) {
+				printf("请输入新的站点名称: ");
+				cin >> point_name;
+				cout << "你确定需要将 " << bus_point[i].sta_name << "站 的名字换成 " << point_name << "站 吗?(Y or N) ";
+				cin >> YN;
+				if(YN == 'Y' || YN == 'y') {
+					bus_point[i].sta_name = point_name;
+					printf("修改站点名称成功!\n");
+				}
+				else printf("已取消更名\n");
+			}
+			
+			
+			if(choose == 2) {
+				string point_name_next;
+				int len;
+				printf("请输入另一个站点的名称: ");
+				cin >> point_name_next;
+				for(int j = 0;j < bus_point.size(); j++) {
+					if(point_name_next == bus_point[j].sta_name) {
+						for(int k = 0;k < road_line.size(); k++) {
+							if((road_line[k].Left.sta_name == point_name && road_line[k].Right.sta_name == point_name_next) || (road_line[k].Right.sta_name == point_name && road_line[k].Left.sta_name == point_name_next)) {
+								printf("请输入这两个站点的更新距离: ");
+								cin >> len;
+								cout << "你确定需要将 " << point_name << "站 到 " << point_name_next << "站 的距离更新为 " << len << "吗? (Y or N) ";
+								cin >> YN;
+								if(YN == 'Y' || YN == 'y') {
+									road_line[k].cost = len;
+									printf("距离更新成功!\n");
+								}
+								else printf("已取消距离更新!\n");
+							}
+						}
+					}
+				}
+			}
+			
+			
+		}
+	}
+}
+
+
 
 void go() {
 	int choose;
 	printf("1、最短路查询\n");
 	printf("2、查询站点信息\n");
 	printf("3、查询线路信息\n");
-	
+	printf("4、修改站点信息\n");
 	printf("请选择: ");
 	scanf("%d", &choose);
 	if(choose == 1) {
@@ -311,6 +369,9 @@ void go() {
 	}
 	if(choose == 3) {
 		ask_line();
+	}
+	if(choose == 4) {
+		change_point();
 	}
 }
 
