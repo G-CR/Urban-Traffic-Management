@@ -38,7 +38,6 @@ int mp[100][100]; // 地图
 int dist[100], flag[100], pre[100];
 int num_of_sta, line_of_bus; // 站点个数, 公交线路个数
 
-
 void build_sta() { // 建站
 	struct Bus_point bp;
 	FILE *fp;
@@ -262,15 +261,56 @@ void min_dist() {
 	find_path(start_num,end_num);
 }
 
+void ask_point() {
+	string point_name;
+	printf("请输入需要查询站点的名称: ");
+	cin >> point_name;
+	for(int i = 0;i < bus_point.size(); i++) {
+		if(point_name == bus_point[i].sta_name) {
+			printf("本站可以搭乘的公交车有:\n");
+			for(int j = 0;j < bus_point[i].bus_num.size(); j++) {
+				cout << bus_point[i].bus_num[j] << "路" << endl;
+			}
+		}
+	}
+}
+
+void ask_line() {
+	string line_name;
+	int line_num;
+	printf("请输入你需要查询的线路:\n");
+	cin >> line_name;
+	for(int i = 1;i <= line_of_bus; i++) {
+		if(line_name == name_hash[i]) {
+			line_num = i;
+			break;
+		}
+	}
+	cout << line_name;
+	printf("路经过以下站点:\n");
+	for(int i = 0;i < bus_line[line_num].size(); i++) {
+		cout << bus_line[line_num][i].sta_name;
+		if(i < bus_line[line_num].size()-1) cout << " -- ";
+	}
+}
+
+
 void go() {
 	int choose;
 	printf("1、最短路查询\n");
-	
+	printf("2、查询站点信息\n");
+	printf("3、查询线路信息\n");
 	
 	printf("请选择: ");
 	scanf("%d", &choose);
 	if(choose == 1) {
 		min_dist();
+	}
+	if(choose == 2) {
+		ask_point();
+	}
+	if(choose == 3) {
+		ask_line();
 	}
 }
 
