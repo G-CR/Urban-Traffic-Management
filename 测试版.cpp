@@ -288,19 +288,28 @@ void ask_line() {
 	string line_name;
 	int line_num;
 	printf("请输入你需要查询的线路:");
-	cin >> line_name;
-	for(int i = 1;i <= line_of_bus; i++) {
-		if(line_name == name_hash[i]) {
-			line_num = i;
-			break;
+	while(cin >> line_name) {
+		int cnt;
+		for(int i = 1;i <= line_of_bus; i++) {
+			cnt = i;
+			if(line_name == name_hash[i]) {
+				line_num = i;
+				cnt = 0;
+				break;
+			}
 		}
+		cnt++;
+		if(cnt > line_of_bus) printf("不好意思,没有查到这条公交线路,请重新输入!\n");
+		else break;
 	}
+	
 	cout << line_name;
 	printf("路经过以下站点:\n");
 	for(int i = 0;i < bus_line[line_num].size(); i++) {
 		cout << bus_line[line_num][i].sta_name;
 		if(i < bus_line[line_num].size()-1) cout << " -- ";
 	}
+	puts("");
 }
 
 void change_point() {
@@ -515,6 +524,67 @@ void add_point() {
 	}
 }
 
+void del_line() {
+	string line_name;
+	int line_name_num;
+	char YN;
+	printf("请输入需要删除的线路: ");
+	cin >> line_name;
+	
+	for(int i = 1;i <= line_of_bus; i++) {
+		if(name_hash[i] == line_name) {
+			line_name_num = i; 
+			break;
+		}
+	}
+	cout << line_name_num << endl; getchar();
+	printf("请再次确认是否需要删除这条线路? (Y or N)");
+	cin >> YN;
+	if(YN == 'Y' || YN == 'y') {
+		string fir, sec;
+		fir = bus_line[line_name_num].begin()->sta_name;
+		for(int i = 1;i < bus_line[line_name_num].size(); i++) {
+			sec = bus_line[line_name_num][i].sta_name;
+			
+			// 寻找在 fir 和 sec 这两个站点所在的路
+			for(int j = 0;j < road_line.size(); j++) {
+				if((fir == road_line[j].Left.sta_name && sec == road_line[j].Right.sta_name) || (fir == road_line[j].Right.sta_name && sec == road_line[j].Left.sta_name)) {
+					
+					// 寻找是否有其他线路经过这条路，如果没有的话就可以删除，如果有就不能删除。
+					int cnt = 0;
+					for(int k = 1;k <= line_of_bus; k++) {
+						for(int l = 1;l <= bus_line[k].size()-1; l++) {
+							if((bus_line[k][l].sta_name == fir && bus_line[k][l+1].sta_name == sec) || (bus_line[k][l].sta_name == sec && bus_line[k][l+1].sta_name == fir)) {
+								cnt++;
+							}
+						}
+					}
+					if(cnt == 1) road_line.erase(road_line.begin()+j);
+				}
+			}
+			fir = sec;
+			
+		}
+		// 从其他存储中删除这条线路信息
+		name_hash.erase(line_name_num);
+		bus_line[line_name_num].erase(bus_line[line_name_num].begin(), bus_line[line_name_num].end());
+		
+		// 重新建图
+		for(int i = 0;i < 100; i++) {
+			for(int j = 0;j < 100; j++) {
+				mp[i][j] = inf;
+			}
+		}
+		for(int i = 0;i < road_line.size(); i++) {
+				mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
+				mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
+		}
+		printf("删除线路成功!\n");
+	}
+	else printf("已取消删除公交线路\n");
+}
+
+
 
 
 
@@ -527,6 +597,7 @@ int go() {
 	printf("4、修改站点信息\n");
 	printf("5、删除站点\n");
 	printf("6、添加站点\n");
+	printf("7、删除线路\n");
 	printf("请选择: ");
 	scanf("%d", &choose);
 	if(choose == 1) {
@@ -547,6 +618,10 @@ int go() {
 	if(choose == 6) {
 		add_point();
 	}
+	if(choose == 7) {
+		del_line();
+	}
+	
 	return choose;
 }
 
