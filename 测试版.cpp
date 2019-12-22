@@ -46,11 +46,6 @@ int check_point_exist(string s) { // 检查站点是否存在
 	return 0;
 }
 
-void add_line() {
-	
-}
-
-
 void build_sta() { // 建站
 	struct Bus_point bp;
 	FILE *fp;
@@ -577,6 +572,12 @@ void del_line() {
 		}
 		// 从其他存储中删除这条线路信息
 		name_hash.erase(line_name_num);
+		// 全体向前移动
+		for(int i = line_name_num+1; i <= line_of_bus; i++) {
+			name_hash[i-1] = name_hash[i];
+		}
+		line_of_bus--;
+		
 		bus_line[line_name_num].erase(bus_line[line_name_num].begin(), bus_line[line_name_num].end());
 		for(int i = 0;i < bus_point.size(); i++) {
 			for(int j = 0;j < bus_point[i].bus_num.size(); j++) {
@@ -603,8 +604,78 @@ void del_line() {
 }
 
 
-
-
+void add_line() {
+	string new_line, pre_sta, new_sta;
+	int new_sta_num, pre_sta_num;
+	struct Bus_line bl;
+	struct Road_line rl;
+	
+	printf("请输入该线路的名称: ");
+	cin >> new_line;
+	name_hash[++line_of_bus] = new_line;
+	
+	int cnt = 0;
+	while(1) {
+		cout << "(输入ok以停止) 请输入 " << new_line << "线 的第" << ++cnt << "个站: ";
+		cin >> new_sta;
+		if(new_sta == "ok") break;
+		/***************公交车站点信息更新***************/
+		int t = check_point_exist(new_sta);
+		if(!t) {
+			printf("抱歉, 不支持增加不存在的站点,请重新输入\n");
+			cnt--;
+			continue;
+		}
+		
+		for(int i = 0;i < bus_point.size(); i++) {
+			if(bus_point[i].sta_name == new_sta) {
+				bus_point[i].bus_num.push_back(new_line);
+				new_sta_num = i;
+				break;
+			}
+		}
+		
+		/***************道路信息更新***************/
+		if(cnt == 1) {
+			pre_sta = new_sta;
+			pre_sta_num = new_sta_num;
+		}
+		else {
+			bool exit_road = 0;
+			for(int i = 0;i < road_line.size(); i++) {
+				if((pre_sta == road_line[i].Left.sta_name && new_sta == road_line[i].Right.sta_name) || (pre_sta == road_line[i].Right.sta_name && new_sta == road_line[i].Left.sta_name)) {
+					printf("此站与前一个站已经存在路程,因此不再添加\n");
+					exit_road = 1;
+					break;
+				}
+			}
+			if(!exit_road) {
+				int len;
+				cout << "未检测到 " << pre_sta <<"站 与 " << new_sta << "站 有路程,请添加: ";
+				cin >> len;
+				
+				rl.Left = bus_point[pre_sta_num];
+				rl.Right = bus_point[new_sta_num];
+				rl.cost = len;
+				road_line.push_back(rl);
+			}
+			pre_sta = new_sta;
+			pre_sta_num = new_sta_num;
+		}
+	}
+	
+	// 重新建图
+	for(int i = 0;i < 100; i++) {
+		for(int j = 0;j < 100; j++) {
+			mp[i][j] = inf;
+		}
+	}
+	for(int i = 0;i < road_line.size(); i++) {
+			mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
+			mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
+	}
+	
+}
 
 
 int go() {
@@ -616,6 +687,7 @@ int go() {
 	printf("5、删除站点\n");
 	printf("6、添加站点\n");
 	printf("7、删除线路\n");
+	printf("8、增加线路\n");
 	printf("请选择: ");
 	scanf("%d", &choose);
 	if(choose == 1) {
@@ -639,7 +711,9 @@ int go() {
 	if(choose == 7) {
 		del_line();
 	}
-	
+	if(choose == 8) {
+		add_line();
+	}
 	return choose;
 }
 
