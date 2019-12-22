@@ -46,6 +46,10 @@ int check_point_exist(string s) { // 检查站点是否存在
 	return 0;
 }
 
+void add_line() {
+	
+}
+
 
 void build_sta() { // 建站
 	struct Bus_point bp;
@@ -225,6 +229,10 @@ void find_path(int start, int end) {
 	stack <int> s;
 	cout << "起点为: " << bus_point[start].sta_name  << endl;
 	cout << "终点为: " << bus_point[end].sta_name << endl;
+	if(dist[end] == inf) {
+		cout << "抱歉," << bus_point[start].sta_name << "站 到 " << bus_point[end].sta_name << "站 尚未开通公交车, 请选择其他出行方式!" << endl;
+		return;
+	}
 	x = pre[end];
 	s.push(-1);
 	while(x != -1) {
@@ -537,12 +545,12 @@ void del_line() {
 			break;
 		}
 	}
-	cout << line_name_num << endl; getchar();
-	printf("请再次确认是否需要删除这条线路? (Y or N)");
+	
+	printf("请再次确认是否需要删除这条线路? (Y or N) ");
 	cin >> YN;
 	if(YN == 'Y' || YN == 'y') {
 		string fir, sec;
-		fir = bus_line[line_name_num].begin()->sta_name;
+		fir = bus_line[line_name_num][0].sta_name;
 		for(int i = 1;i < bus_line[line_name_num].size(); i++) {
 			sec = bus_line[line_name_num][i].sta_name;
 			
@@ -559,7 +567,9 @@ void del_line() {
 							}
 						}
 					}
-					if(cnt == 1) road_line.erase(road_line.begin()+j);
+					if(cnt <= 1) {
+						road_line.erase(road_line.begin()+j);
+					} 
 				}
 			}
 			fir = sec;
@@ -568,6 +578,14 @@ void del_line() {
 		// 从其他存储中删除这条线路信息
 		name_hash.erase(line_name_num);
 		bus_line[line_name_num].erase(bus_line[line_name_num].begin(), bus_line[line_name_num].end());
+		for(int i = 0;i < bus_point.size(); i++) {
+			for(int j = 0;j < bus_point[i].bus_num.size(); j++) {
+				if(bus_point[i].bus_num[j] == line_name) {
+					bus_point[i].bus_num.erase(bus_point[i].bus_num.begin()+j);
+					break;
+				}
+			}
+		}
 		
 		// 重新建图
 		for(int i = 0;i < 100; i++) {
