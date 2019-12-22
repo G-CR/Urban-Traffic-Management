@@ -30,14 +30,46 @@ struct node{
 	}
 };
 
+struct Short_trasfer {
+	int cost;
+	vector <string> sta_name;
+	vector <string> sta_num;
+};
+
 vector <Bus_point> bus_point;
 vector <Bus_line> bus_line[10];
 vector <Road_line> road_line;
 map <int, string> name_hash;
+queue <> short_q;
 int mp[100][100]; // 地图
 int dist[100], flag[100], pre[100];
 int num_of_sta, line_of_bus; // 站点个数, 公交线路个数
 
+
+void shortest_transfer() {
+	string start, end;
+	int start_num, end_num;
+//	printf("公交站的总个数个数为: %d\n", num_of_sta);
+	printf("请输入起点位置: ");
+	cin >> start;
+	for(int i = 0;i < bus_point.size(); i++) {
+		if(bus_point[i].sta_name == start) {
+			start_num = bus_point[i].sta_num;
+			break;
+		}
+	}
+	
+	printf("请输入终点位置: ");
+	cin >> end;
+	for(int i = 0;i < bus_point.size(); i++) {
+		if(bus_point[i].sta_name == end) {
+			end_num = bus_point[i].sta_num;
+			break;
+		}
+	}
+	
+	
+}
 
 int check_point_exist(string s) { // 检查站点是否存在
 	for(int i = 0;i < bus_point.size(); i++) {
@@ -527,6 +559,8 @@ void add_point() {
 	}
 }
 
+
+
 void del_line() {
 	string line_name;
 	int line_name_num;
@@ -618,7 +652,10 @@ void add_line() {
 	while(1) {
 		cout << "(输入ok以停止) 请输入 " << new_line << "线 的第" << ++cnt << "个站: ";
 		cin >> new_sta;
-		if(new_sta == "ok") break;
+		if(new_sta == "ok") {
+			cout << new_sta << "线 添加完成!" << endl;
+			break;
+		} 
 		/***************公交车站点信息更新***************/
 		int t = check_point_exist(new_sta);
 		if(!t) {
@@ -677,6 +714,142 @@ void add_line() {
 	
 }
 
+void change_line() {
+	string line_name;
+	int line_name_num;
+	printf("输入需要修改的线路 :");
+	cin >> line_name;
+	
+	for(int i = 1;i <= line_of_bus; i++) {
+		if(name_hash[i] == line_name) {
+			line_name_num = i; 
+			break;
+		}
+	}
+	
+	string fir, sec;
+	fir = bus_line[line_name_num][0].sta_name;
+	for(int i = 1;i < bus_line[line_name_num].size(); i++) {
+		sec = bus_line[line_name_num][i].sta_name;
+		
+		// 寻找在 fir 和 sec 这两个站点所在的路
+		for(int j = 0;j < road_line.size(); j++) {
+			if((fir == road_line[j].Left.sta_name && sec == road_line[j].Right.sta_name) || (fir == road_line[j].Right.sta_name && sec == road_line[j].Left.sta_name)) {
+				
+				// 寻找是否有其他线路经过这条路，如果没有的话就可以删除，如果有就不能删除。
+				int cnt = 0;
+				for(int k = 1;k <= line_of_bus; k++) {
+					for(int l = 1;l <= bus_line[k].size()-1; l++) {
+						if((bus_line[k][l].sta_name == fir && bus_line[k][l+1].sta_name == sec) || (bus_line[k][l].sta_name == sec && bus_line[k][l+1].sta_name == fir)) {
+							cnt++;
+						}
+					}
+				}
+				if(cnt <= 1) {
+					road_line.erase(road_line.begin()+j);
+				} 
+			}
+		}
+		fir = sec;
+	}
+	
+	// 从其他存储中删除这条线路信息
+	name_hash.erase(line_name_num);
+	// 全体向前移动
+	for(int i = line_name_num+1; i <= line_of_bus; i++) {
+		name_hash[i-1] = name_hash[i];
+	}
+	line_of_bus--;
+	
+	bus_line[line_name_num].erase(bus_line[line_name_num].begin(), bus_line[line_name_num].end());
+	for(int i = 0;i < bus_point.size(); i++) {
+		for(int j = 0;j < bus_point[i].bus_num.size(); j++) {
+			if(bus_point[i].bus_num[j] == line_name) {
+				bus_point[i].bus_num.erase(bus_point[i].bus_num.begin()+j);
+				break;
+			}
+		}
+	}
+
+	
+	/*********上为删除*********下为添加******总为修改***********/
+	
+	string new_line, pre_sta, new_sta;
+	int new_sta_num, pre_sta_num;
+	struct Bus_line bl;
+	struct Road_line rl;
+	
+	new_line = line_name;
+	name_hash[++line_of_bus] = new_line;
+	
+	int cnt = 0;
+	while(1) {
+		cout << "(输入ok以停止) 请输入修改后 " << new_line << "线 的第" << ++cnt << "个站: ";
+		cin >> new_sta;
+		if(new_sta == "ok") {
+			cout << line_name <<"路 修改完成!" << endl;
+			break;
+		} 
+		/***************公交车站点信息更新***************/
+		int t = check_point_exist(new_sta);
+		if(!t) {
+			printf("抱歉, 不支持增加不存在的站点,请重新输入\n");
+			cnt--;
+			continue;
+		}
+		
+		for(int i = 0;i < bus_point.size(); i++) {
+			if(bus_point[i].sta_name == new_sta) {
+				bus_point[i].bus_num.push_back(new_line);
+				new_sta_num = i;
+				break;
+			}
+		}
+		
+		/***************道路信息更新***************/
+		if(cnt == 1) {
+			pre_sta = new_sta;
+			pre_sta_num = new_sta_num;
+		}
+		else {
+			bool exit_road = 0;
+			for(int i = 0;i < road_line.size(); i++) {
+				if((pre_sta == road_line[i].Left.sta_name && new_sta == road_line[i].Right.sta_name) || (pre_sta == road_line[i].Right.sta_name && new_sta == road_line[i].Left.sta_name)) {
+					printf("此站与前一个站同为其他站点的路段所以已经存在路程,因此不再添加\n");
+					exit_road = 1;
+					break;
+				}
+			}
+			if(!exit_road) {
+				int len;
+				cout << "请重新输入 " << pre_sta <<"站 与 " << new_sta << "站 有路程: ";
+				cin >> len;
+				
+				rl.Left = bus_point[pre_sta_num];
+				rl.Right = bus_point[new_sta_num];
+				rl.cost = len;
+				road_line.push_back(rl);
+			}
+			pre_sta = new_sta;
+			pre_sta_num = new_sta_num;
+		}
+	}
+	
+	// 重新建图
+	for(int i = 0;i < 100; i++) {
+		for(int j = 0;j < 100; j++) {
+			mp[i][j] = inf;
+		}
+	}
+	for(int i = 0;i < road_line.size(); i++) {
+			mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
+			mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
+	}
+
+
+}
+
+
 
 int go() {
 	int choose;
@@ -688,6 +861,7 @@ int go() {
 	printf("6、添加站点\n");
 	printf("7、删除线路\n");
 	printf("8、增加线路\n");
+	printf("9、修改线路\n");
 	printf("请选择: ");
 	scanf("%d", &choose);
 	if(choose == 1) {
@@ -713,6 +887,9 @@ int go() {
 	}
 	if(choose == 8) {
 		add_line();
+	}
+	if(choose == 9) {
+		change_line();
 	}
 	return choose;
 }
