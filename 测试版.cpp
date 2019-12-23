@@ -1,6 +1,7 @@
 #include <bits/stdc++.h>
 using namespace std;
 const int inf = 1e9;
+
 struct Bus_point { // 公交车站点信息
 	int sta_num;
 	string sta_name; // 站点名称
@@ -31,19 +32,64 @@ struct node{
 };
 
 struct Short_trasfer {
-	int cost;
-	vector <string> sta_name;
-	vector <string> sta_num;
+	int bp; // 当前所在的站点是什么
+	vector <int> bus_proccess; // 到达这个站点需要做什么车以及之前坐的车
+	vector <int> bus_line;
+	int trasfer; // 到达这个站点需要换乘几次
 };
 
 vector <Bus_point> bus_point;
 vector <Bus_line> bus_line[10];
 vector <Road_line> road_line;
 map <int, string> name_hash;
-queue <> short_q;
+queue <Short_trasfer> q;
 int mp[100][100]; // 地图
 int dist[100], flag[100], pre[100];
 int num_of_sta, line_of_bus; // 站点个数, 公交线路个数
+int shortest;
+
+
+void bfs(int end_num) {
+	while(!q.empty()) {
+		int cnt = 0;
+		struct Short_trasfer st, t;
+		st = q.front(); q.pop();
+		if(st.bp == end_num) {
+			printf("最少需要换乘%d次\n", st.trasfer);
+			cout << bus_point[st.bus_proccess[0]].sta_name;
+			for(int i = 1;i < st.bus_proccess.size()-1; i++) {
+				cout << " -" << name_hash[st.bus_line[cnt++]] << "路- "<< bus_point[st.bus_proccess[i]].sta_name;
+			}
+			cout << " -" << name_hash[st.bus_line[cnt++]] << "路- " << bus_point[st.bus_proccess[st.bus_proccess.size()-1]].sta_name << endl;
+			return;
+		}
+		
+		for(int i = 0;i < bus_point[st.bp].bus_num.size(); i++) { // 遍历此站公交车可以到达各个线路
+			string line_name = bus_point[st.bp].bus_num[i]; // 807
+			int line_name_num;
+			
+			for(int j = 1;j <= line_of_bus; j++) { // 寻找公交线路的编号
+				if(name_hash[j] == line_name) {
+					line_name_num = j;
+					break;
+				}
+			}
+			
+//			cout << bus_line[line_name_num].size() << endl;getchar(); cout << "hello" << endl;
+			for(int j = 0;j < bus_line[line_name_num].size(); j++) { // 寻找这路公交车可以到达的站点
+				t.bp = bus_line[line_name_num][j].sta_num;
+				t.trasfer = st.trasfer+1;
+				t.bus_proccess = st.bus_proccess;
+				t.bus_proccess.push_back(t.bp);
+				t.bus_line = st.bus_line;
+				t.bus_line.push_back(line_name_num);
+				q.push(t);
+			}
+		}
+		
+		
+	}
+}
 
 
 void shortest_transfer() {
@@ -68,8 +114,16 @@ void shortest_transfer() {
 		}
 	}
 	
+	while(!q.empty()) q.pop();
+	struct Short_trasfer st;
+	st.bp = start_num;
+	st.trasfer = -1;
+	st.bus_proccess.push_back(start_num);
+	q.push(st);
 	
+	bfs(end_num);
 }
+
 
 int check_point_exist(string s) { // 检查站点是否存在
 	for(int i = 0;i < bus_point.size(); i++) {
@@ -862,6 +916,7 @@ int go() {
 	printf("7、删除线路\n");
 	printf("8、增加线路\n");
 	printf("9、修改线路\n");
+	printf("10、最短换乘\n");
 	printf("请选择: ");
 	scanf("%d", &choose);
 	if(choose == 1) {
@@ -890,6 +945,9 @@ int go() {
 	}
 	if(choose == 9) {
 		change_line();
+	}
+	if(choose == 10) {
+		shortest_transfer();
 	}
 	return choose;
 }
