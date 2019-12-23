@@ -38,92 +38,77 @@ struct Short_trasfer {
 	int trasfer; // 到达这个站点需要换乘几次
 };
 
-vector <Bus_point> bus_point;
-vector <Bus_line> bus_line[10];
-vector <Road_line> road_line;
-map <int, string> name_hash;
-queue <Short_trasfer> q;
+vector <Bus_point> bus_point; // 存储公交车站信息
+vector <Bus_line> bus_line[10]; // 存储公交线路
+vector <Road_line> road_line; // 存储路段信息
+map <int, string> name_hash; // 存储下标与公交车线路的关系
+queue <Short_trasfer> q; // 存储最短换乘临时容器
 int mp[100][100]; // 地图
-int dist[100], flag[100], pre[100];
+int dist[100], flag[100], pre[100]; // 从起点到任意点的最小距离, 是否到过该点, 走过点的前缀
 int num_of_sta, line_of_bus; // 站点个数, 公交线路个数
 int shortest;
 
 
-void bfs(int end_num) {
-	while(!q.empty()) {
-		int cnt = 0;
-		struct Short_trasfer st, t;
-		st = q.front(); q.pop();
-		if(st.bp == end_num) {
-			printf("最少需要换乘%d次\n", st.trasfer);
-			cout << bus_point[st.bus_proccess[0]].sta_name;
-			for(int i = 1;i < st.bus_proccess.size()-1; i++) {
-				cout << " -" << name_hash[st.bus_line[cnt++]] << "路- "<< bus_point[st.bus_proccess[i]].sta_name;
-			}
-			cout << " -" << name_hash[st.bus_line[cnt++]] << "路- " << bus_point[st.bus_proccess[st.bus_proccess.size()-1]].sta_name << endl;
-			return;
-		}
-		
-		for(int i = 0;i < bus_point[st.bp].bus_num.size(); i++) { // 遍历此站公交车可以到达各个线路
-			string line_name = bus_point[st.bp].bus_num[i]; // 807
-			int line_name_num;
-			
-			for(int j = 1;j <= line_of_bus; j++) { // 寻找公交线路的编号
-				if(name_hash[j] == line_name) {
-					line_name_num = j;
-					break;
-				}
-			}
-			
-//			cout << bus_line[line_name_num].size() << endl;getchar(); cout << "hello" << endl;
-			for(int j = 0;j < bus_line[line_name_num].size(); j++) { // 寻找这路公交车可以到达的站点
-				t.bp = bus_line[line_name_num][j].sta_num;
-				t.trasfer = st.trasfer+1;
-				t.bus_proccess = st.bus_proccess;
-				t.bus_proccess.push_back(t.bp);
-				t.bus_line = st.bus_line;
-				t.bus_line.push_back(line_name_num);
-				q.push(t);
+void input_file() {
+	FILE *fp;//文件指针 
+	int i;
+	
+	/***************车站信息***************/
+	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/bus_sta.txt","w+");
+	if(fp != NULL) {
+		for(int i = 0;i < bus_point.size(); i++) {
+			fprintf(fp, "%s  ", bus_point[i].sta_name.c_str());
+			for(int j = 0;j < bus_point[i].bus_num.size(); j++) {
+				if(j == bus_point[i].bus_num.size()-1) fprintf(fp, "%s\n", bus_point[i].bus_num[j].c_str());
+				else fprintf(fp, "%s ", bus_point[i].bus_num[j].c_str());
 			}
 		}
-		
-		
 	}
+	else printf("车站信息文件打开失败！\n");
+	fclose(fp);
+	/***************车站信息***************/
+	
+	
+	
+	
+	/***************公交线路信息***************/
+	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/bus_line.txt","w+");
+	if(fp != NULL) {
+		for(int i = 1;i <= line_of_bus; i++) {
+			fprintf(fp, "%s ", name_hash[i].c_str());
+			for(int j = 0;j < bus_line[i].size(); j++) {
+				if(j == bus_line[i].size()-1) fprintf(fp, "%s\n", bus_line[i][j].sta_name.c_str());
+				else fprintf(fp, "%s ", bus_line[i][j].sta_name.c_str());
+			}
+		}
+	}
+	else printf("公交线路信息文件打开失败！\n");
+	fclose(fp);
+	/***************公交线路信息***************/
+	
+	
+	/***************道路信息***************/
+	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/road.txt","w+");
+	if(fp != NULL) {
+		for(int i = 0;i < road_line.size(); i++) {
+			fprintf(fp, "%d %d %d\n", road_line[i].Left.sta_num, road_line[i].Right.sta_num, road_line[i].cost);
+		}
+	}
+	else printf("道路信息文件打开失败！\n");
+	fclose(fp);
+	/***************道路信息***************/
+
+//	for(i=0;i<n;i++)
+//	fprintf(f,"%s %s %s %.2f %.2f %.2f %.2f\n",p[i].ID, p[i].num, p[i].name, p[i].score_c, p[i].score_m, p[i].score_e, p[i].score_sum);  //用fprintf将结构体输入到文件中
+//
+//	printf("文件写入成功！\n");
+//	fclose(f);//关闭文件 
+//	}
+//	else 
+//	printf("文件打开失败！\n");
+	
+	
 }
-
-
-void shortest_transfer() {
-	string start, end;
-	int start_num, end_num;
-//	printf("公交站的总个数个数为: %d\n", num_of_sta);
-	printf("请输入起点位置: ");
-	cin >> start;
-	for(int i = 0;i < bus_point.size(); i++) {
-		if(bus_point[i].sta_name == start) {
-			start_num = bus_point[i].sta_num;
-			break;
-		}
-	}
-	
-	printf("请输入终点位置: ");
-	cin >> end;
-	for(int i = 0;i < bus_point.size(); i++) {
-		if(bus_point[i].sta_name == end) {
-			end_num = bus_point[i].sta_num;
-			break;
-		}
-	}
-	
-	while(!q.empty()) q.pop();
-	struct Short_trasfer st;
-	st.bp = start_num;
-	st.trasfer = -1;
-	st.bus_proccess.push_back(start_num);
-	q.push(st);
-	
-	bfs(end_num);
-}
-
 
 int check_point_exist(string s) { // 检查站点是否存在
 	for(int i = 0;i < bus_point.size(); i++) {
@@ -899,8 +884,82 @@ void change_line() {
 			mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
 			mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
 	}
+}
 
 
+void bfs(int end_num) {
+	while(!q.empty()) {
+		int cnt = 0;
+		struct Short_trasfer st, t;
+		st = q.front(); q.pop();
+		if(st.bp == end_num) {
+			printf("最少需要换乘%d次\n", st.trasfer);
+			cout << bus_point[st.bus_proccess[0]].sta_name;
+			for(int i = 1;i < st.bus_proccess.size()-1; i++) {
+				cout << " -" << name_hash[st.bus_line[cnt++]] << "路- "<< bus_point[st.bus_proccess[i]].sta_name;
+			}
+			cout << " -" << name_hash[st.bus_line[cnt++]] << "路- " << bus_point[st.bus_proccess[st.bus_proccess.size()-1]].sta_name << endl;
+			return;
+		}
+		
+		for(int i = 0;i < bus_point[st.bp].bus_num.size(); i++) { // 遍历此站公交车可以到达各个线路
+			string line_name = bus_point[st.bp].bus_num[i]; // 807
+			int line_name_num;
+			
+			for(int j = 1;j <= line_of_bus; j++) { // 寻找公交线路的编号
+				if(name_hash[j] == line_name) {
+					line_name_num = j;
+					break;
+				}
+			}
+			
+//			cout << bus_line[line_name_num].size() << endl;getchar(); cout << "hello" << endl;
+			for(int j = 0;j < bus_line[line_name_num].size(); j++) { // 寻找这路公交车可以到达的站点
+				t.bp = bus_line[line_name_num][j].sta_num;
+				t.trasfer = st.trasfer+1;
+				t.bus_proccess = st.bus_proccess;
+				t.bus_proccess.push_back(t.bp);
+				t.bus_line = st.bus_line;
+				t.bus_line.push_back(line_name_num);
+				q.push(t);
+			}
+		}
+		
+		
+	}
+}
+
+
+void shortest_transfer() {
+	string start, end;
+	int start_num, end_num;
+//	printf("公交站的总个数个数为: %d\n", num_of_sta);
+	printf("请输入起点位置: ");
+	cin >> start;
+	for(int i = 0;i < bus_point.size(); i++) {
+		if(bus_point[i].sta_name == start) {
+			start_num = bus_point[i].sta_num;
+			break;
+		}
+	}
+	
+	printf("请输入终点位置: ");
+	cin >> end;
+	for(int i = 0;i < bus_point.size(); i++) {
+		if(bus_point[i].sta_name == end) {
+			end_num = bus_point[i].sta_num;
+			break;
+		}
+	}
+	
+	while(!q.empty()) q.pop();
+	struct Short_trasfer st;
+	st.bp = start_num;
+	st.trasfer = -1;
+	st.bus_proccess.push_back(start_num);
+	q.push(st);
+	
+	bfs(end_num);
 }
 
 
@@ -958,6 +1017,9 @@ int main() {
 	build_line();
 	while(1) {
 		int t = go();
-		if(t == 0) break;
+		if(t == 0) {
+			output_file();
+			break;
+		} 
 	}
 }
