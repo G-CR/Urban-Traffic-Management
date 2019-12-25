@@ -6,10 +6,12 @@
 //  Copyright © 2019 龚朝瑞. All rights reserved.
 //
 
-#include "Urban Traffic Management.hpp"
+#include "Urban-Traffic-Management.hpp"
 
-int main(int argc, const char * argv[]) {
-    // insert code here...
-    std::cout << "Hello, World!\n";
-    return 0;
+int main() {
+    build_sta();
+    build_map();
+    build_line();
+    build_user();
+    home_page();
 }

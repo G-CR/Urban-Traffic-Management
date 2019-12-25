@@ -31,7 +31,7 @@ struct node{
 	}
 };
 
-struct Short_trasfer {
+struct Short_trasfer { // 最短换乘需要存储的信息
 	int bp; // 当前所在的站点是什么
 	vector <int> bus_proccess; // 到达这个站点需要做什么车以及之前坐的车
 	vector <int> bus_line;
@@ -49,12 +49,12 @@ int num_of_sta, line_of_bus; // 站点个数, 公交线路个数
 int shortest;
 
 
-void input_file() {
+void input_file() { // 写入文件操作
 	FILE *fp;//文件指针 
-	int i;
+	
 	
 	/***************车站信息***************/
-	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/bus_sta.txt","w+");
+	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/bus_sta.txt","w+"); // 以重写车站信息的文件
 	if(fp != NULL) {
 		for(int i = 0;i < bus_point.size(); i++) {
 			fprintf(fp, "%s  ", bus_point[i].sta_name.c_str());
@@ -67,7 +67,6 @@ void input_file() {
 	else printf("车站信息文件打开失败！\n");
 	fclose(fp);
 	/***************车站信息***************/
-	
 	
 	
 	
@@ -87,6 +86,7 @@ void input_file() {
 	/***************公交线路信息***************/
 	
 	
+	
 	/***************道路信息***************/
 	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/road.txt","w+");
 	if(fp != NULL) {
@@ -97,22 +97,12 @@ void input_file() {
 	else printf("道路信息文件打开失败！\n");
 	fclose(fp);
 	/***************道路信息***************/
-
-//	for(i=0;i<n;i++)
-//	fprintf(f,"%s %s %s %.2f %.2f %.2f %.2f\n",p[i].ID, p[i].num, p[i].name, p[i].score_c, p[i].score_m, p[i].score_e, p[i].score_sum);  //用fprintf将结构体输入到文件中
-//
-//	printf("文件写入成功！\n");
-//	fclose(f);//关闭文件 
-//	}
-//	else 
-//	printf("文件打开失败！\n");
-	
-	
+	printf("公交系统信息更新成功!\n");
 }
 
 int check_point_exist(string s) { // 检查站点是否存在
 	for(int i = 0;i < bus_point.size(); i++) {
-		if(s == bus_point[i].sta_name) return 1;
+		if(s == bus_point[i].sta_name) return 1; // 如果传入的与存在的的相符合,证明该站点存在
 	}
 	return 0;
 }
@@ -124,30 +114,27 @@ void build_sta() { // 建站
 	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/bus_sta.txt", "r");
 	bool t = 0;
 	if(fp != NULL) {
-		while(!feof(fp)) {
-			fscanf(fp, "%s", s);
-//			puts(s);
-			if(strlen(s) < 4) {
+		while(!feof(fp)) { // 直到读到文件末尾
+			fscanf(fp, "%s", s); // 字符串读取
+			if(strlen(s) < 4) { // 字符串长度小于4的按照公交车线路名称处理
 				bp.bus_num.push_back(s);
-			}
-			else {
-				num_of_sta++;
-				if(t) bus_point.push_back(bp);
-//				cout << bp.sta_name << " ";
-//				for(int i = 0;i < bp.bus_num.size(); i++) cout << bp.bus_num[i]<< " ";
-//				puts("");
+			} 
+			else { // 否则按照站点名称处理
+				num_of_sta++; // 站点总数++
+				if(t) bus_point.push_back(bp); 
 				t=1;
-				bp.bus_num.clear();
+				bp.bus_num.clear(); // 清空结构体进行下一次的存储
 				bp.sta_name = s;
 			}
 		}
-		bus_point.push_back(bp);
+		bus_point.push_back(bp); // 特殊处理最后一次站点加入
 	}
 	else {
 		printf("文件打开失败!\n");
 	}
+	
 	for(int i = 0; i < bus_point.size(); i++) {
-		bus_point[i].sta_num = i;
+		bus_point[i].sta_num = i; // 给每个站点编号，方便进行下一步操作
 	}
 	
 	// 输出测试
@@ -161,30 +148,32 @@ void build_sta() { // 建站
 }
 
 
-void build_line() { // 建线路
-	struct Bus_line bl;
-	char s[30];
+void build_line() { // 建公交线路
+	struct Bus_line bl; // 定义存储道路信息的结构体
+	char s[30]; 
 	FILE *fp;
 	fp = fopen("/Users/gongzhaorui/Desktop/trafic_information/bus_line.txt", "r");
 	if(fp != NULL) {
 		while(!feof(fp)) {
 			fscanf(fp, "%s", s);
 //			puts(s);
-			if(strlen(s) < 4) {
-				line_of_bus++;
+			if(strlen(s) < 4) { // 如果长度小于4 按照线路名称处理
+				line_of_bus++; // 线路名称会放在各个站点最前面 所以遇到后需要将总线路++
 				name_hash[line_of_bus] = s;
 			}
-			else {
+			else { // 否则就是站点名称
 				bl.sta_name = s;
-				for(int i = 0;i < bus_point.size(); i++) {
-					if(bus_point[i].sta_name == s) {
-						bl.sta_num = bus_point[i].sta_num;
+				for(int i = 0;i < bus_point.size(); i++) { // 寻找该站点的编号
+					if(bus_point[i].sta_name == s) { 
+						bl.sta_num = bus_point[i].sta_num; 
 						break;
 					}
 				}
-				bus_line[line_of_bus].push_back(bl);
+				bus_line[line_of_bus].push_back(bl); // 将这个线路加入到链表中
 			}
 		}
+		
+// 		测试输出
 //		for(int i = 1;i <= line_of_bus; i++) {
 //			for(int j = 0;j < bus_line[i].size(); j++) {
 //				cout  << bus_line[i][j].sta_num << " " << bus_line[i][j].sta_name << endl;
@@ -197,6 +186,22 @@ void build_line() { // 建线路
 	}
 }
 
+void init_map() { // 初始化图
+	for(int i = 0;i < 100; i++) { // 初始化将每个点之间的路初始化为无穷大
+		for(int j = 0;j < 100; j++) {
+			mp[i][j] = inf;
+		}
+	}
+	for(int i = 0;i < road_line.size(); i++) { // 从道路信息中将站点编号和道路长度提取出来，加入数组中
+		mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
+		mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
+		
+//		printf("%d -> %d = %d\n", road_line[i].Left.sta_num,road_line[i].Right.sta_num,road_line[i].cost);
+	}
+
+}
+
+
 void build_map() { // 建图
 	struct Bus_point bp;
 	struct Road_line rl;
@@ -208,10 +213,10 @@ void build_map() { // 建图
 	if(fp != NULL) {
 		while(!feof(fp)) {
 			fscanf(fp, "%d %d %d", &a, &b, &c);
-			rl.Left = bus_point[a];
-			rl.Right = bus_point[b];
-			rl.cost = c;
-			road_line.push_back(rl);
+			rl.Left = bus_point[a]; // 该条路左边的站点
+			rl.Right = bus_point[b]; // 该条路右边的站点
+			rl.cost = c; // 该条路的长度
+			road_line.push_back(rl); // 将路段信息加入链表
 		}
 	}
 	else {
@@ -222,28 +227,15 @@ void build_map() { // 建图
 //		for(int i = 0;i < road_line.size(); i++) {
 //			printf("%d %d %d\n", road_line[i].Left.sta_num, road_line[i].Right.sta_num, road_line[i].cost);
 //		}
-	for(int i = 0;i < road_line.size(); i++) {
+	for(int i = 0;i < road_line.size(); i++) { // 将每条路段编号
 			road_line[i].road_num = i;
 //			cout << i << endl;
-}
-		
-		
-	// 建图
-	for(int i = 0;i < 100; i++) {
-		for(int j = 0;j < 100; j++) {
-			mp[i][j] = inf;
-		}
-	}
-	for(int i = 0;i < road_line.size(); i++) {
-		mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
-		mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
-//		printf("%d -> %d = %d\n", road_line[i].Left.sta_num,road_line[i].Right.sta_num,road_line[i].cost);
-	}
-	
+	}	
+	init_map();	// 建图
 }
 
 
-void dijkstra(int st)
+void dijkstra(int st) // 最短路算法
 {
 	priority_queue <node> Q;
 	Q.push(node(st,0));
@@ -279,9 +271,9 @@ void dijkstra(int st)
 }
 
 int find_bus_line(int fir, int sec) { // 最短路中为了查询两站之间坐什么车 返回道路序号
-	for(int i = 1;i <= line_of_bus; i++) {
-		for(int j = 0;j < bus_line[i].size()-1; j++) {
-			if((bus_point[fir].sta_name == bus_line[i][j].sta_name && bus_point[sec].sta_name == bus_line[i][j+1].sta_name) || (bus_point[sec].sta_name == bus_line[i][j].sta_name && bus_point[fir].sta_name == bus_line[i][j+1].sta_name))
+	for(int i = 1;i <= line_of_bus; i++) { // 枚举线路
+		for(int j = 0;j < bus_line[i].size()-1; j++) { // 该条线路上的所有站点
+			if((bus_point[fir].sta_name == bus_line[i][j].sta_name && bus_point[sec].sta_name == bus_line[i][j+1].sta_name) || (bus_point[sec].sta_name == bus_line[i][j].sta_name && bus_point[fir].sta_name == bus_line[i][j+1].sta_name)) // fir 与 sec 在某条线路上是前后站的时候返回这条线路
 			return i;
 		}
 	}
@@ -289,17 +281,16 @@ int find_bus_line(int fir, int sec) { // 最短路中为了查询两站之间坐
 }
 
 
-
-void find_path(int start, int end) {
-	int x, fir, sec;;
+void find_path(int start, int end) { // 寻找最短路应该怎么走
+	int x, fir, sec;
 	stack <int> s;
 	cout << "起点为: " << bus_point[start].sta_name  << endl;
 	cout << "终点为: " << bus_point[end].sta_name << endl;
-	if(dist[end] == inf) {
+	if(dist[end] == inf) { // 从起点到终点的距离为无穷大时 证明没有线路可以走
 		cout << "抱歉," << bus_point[start].sta_name << "站 到 " << bus_point[end].sta_name << "站 尚未开通公交车, 请选择其他出行方式!" << endl;
 		return;
 	}
-	x = pre[end];
+	x = pre[end]; // 
 	s.push(-1);
 	while(x != -1) {
 		s.push(x);
@@ -325,7 +316,7 @@ void min_dist() {
 //	printf("公交站的总个数个数为: %d\n", num_of_sta);
 	printf("请输入起点位置: "); 
 	cin >> start;
-	for(int i = 0;i < bus_point.size(); i++) {
+	for(int i = 0;i < bus_point.size(); i++) { // 寻找站点对应的编号
 		if(bus_point[i].sta_name == start) {
 			start_num = bus_point[i].sta_num;
 			break;
@@ -333,7 +324,7 @@ void min_dist() {
 	}
 	printf("请输入终点位置: ");
 	cin >> end;
-	for(int i = 0;i < bus_point.size(); i++) {
+	for(int i = 0;i < bus_point.size(); i++) { // 寻找站点对应的编号
 		if(bus_point[i].sta_name == end) {
 			end_num = bus_point[i].sta_num;
 			break;
@@ -344,11 +335,11 @@ void min_dist() {
 	find_path(start_num,end_num);
 }
 
-void ask_point() {
+void ask_point() { // 站点信息询问
 	string point_name;
 	printf("请输入需要查询站点的名称: ");
 	cin >> point_name;
-	for(int i = 0;i < bus_point.size(); i++) {
+	for(int i = 0;i < bus_point.size(); i++) { // 
 		if(point_name == bus_point[i].sta_name) {
 			printf("本站可以搭乘的公交车有:\n");
 			for(int j = 0;j < bus_point[i].bus_num.size(); j++) {
@@ -358,13 +349,13 @@ void ask_point() {
 	}
 }
 
-void ask_line() {
+void ask_line() { // 线路询问
 	string line_name;
 	int line_num;
 	printf("请输入你需要查询的线路:");
-	while(cin >> line_name) {
-		int cnt;
-		for(int i = 1;i <= line_of_bus; i++) {
+	while(cin >> line_name) { // 直到输入正确
+		int cnt; // 它的大小可以判断是否找到了正确线路
+		for(int i = 1;i <= line_of_bus; i++) { 
 			cnt = i;
 			if(line_name == name_hash[i]) {
 				line_num = i;
@@ -377,7 +368,7 @@ void ask_line() {
 		else break;
 	}
 	
-	cout << line_name;
+	cout << line_name; 
 	printf("路经过以下站点:\n");
 	for(int i = 0;i < bus_line[line_num].size(); i++) {
 		cout << bus_line[line_num][i].sta_name;
@@ -386,72 +377,82 @@ void ask_line() {
 	puts("");
 }
 
-void change_point() {
+void change_point() { // 站点修改
 	string point_name;
 	int point_num;
 	printf("请输入需要修改站点的名称: ");
-	cin >> point_name;
-	for(int i = 0;i < bus_point.size(); i++) {
-		if(point_name == bus_point[i].sta_name) {
-			point_num = i;
-			int choose;
-			char YN;
-			printf("1、为这个站点修改名称\n");
-			printf("2、修改这个站到另一个站点的距离\n");
-			scanf("%d", &choose);
-			
-			if(choose == 1) {
-				string point_name_change;
-				printf("请输入新的站点名称: ");
-				cin >> point_name_change;
-				cout << "你确定需要将 " << bus_point[i].sta_name << "站 的名字换成 " << point_name_change << "站 吗?(Y or N) ";
-				cin >> YN;
-				if(YN == 'Y' || YN == 'y') {
-					bus_point[i].sta_name = point_name_change;
-					for(int i = 0;i < line_of_bus; i++) {
-						for(int j = 0;j < bus_line[i].size(); j++) {
-							if(bus_line[i][j].sta_name == point_name) {
-								bus_line[i][j].sta_name = point_name_change;
-							}
-						}
-					}
-					printf("修改站点名称成功!\n");
-				}
-				else printf("已取消更名\n");
-			}
-			
-			
-			if(choose == 2) {
-				string point_name_next;
-				int len;
-				printf("请输入另一个站点的名称: ");
-				cin >> point_name_next;
-				for(int j = 0;j < bus_point.size(); j++) {
-					if(point_name_next == bus_point[j].sta_name) {
-						if(mp[i][j] == inf) {
-							printf("这两个站并不相邻, 如果想要建立联系, 请另外增加公交线路!\n");
-							break;
-						}
-						for(int k = 0;k < road_line.size(); k++) {
-							if((road_line[k].Left.sta_name == point_name && road_line[k].Right.sta_name == point_name_next) || (road_line[k].Right.sta_name == point_name && road_line[k].Left.sta_name == point_name_next)) {
-								printf("请输入这两个站点的更新距离: ");
-								cin >> len;
-								cout << "你确定需要将 " << point_name << "站 到 " << point_name_next << "站 的距离更新为 " << len << " 吗? (Y or N) ";
-								cin >> YN;
-								if(YN == 'Y' || YN == 'y') {
-									road_line[k].cost = len;
-									mp[i][j] = len; mp[j][i] = len;
-									printf("距离更新成功!\n");
+	while(cin >> point_name) {
+		bool is_found = 0;
+		for(int i = 0;i < bus_point.size(); i++) { // 遍历站点信息，找到需要修改的那一个
+			if(point_name == bus_point[i].sta_name) { // 如果找到了
+				is_found = 1;
+				point_num = i; // 记录站点的编号
+				int choose;
+				char YN;
+				printf("1、为这个站点修改名称\n");
+				printf("2、修改这个站到另一个站点的距离\n");
+				scanf("%d", &choose);
+					
+				if(choose == 1) {
+					string point_name_change;
+					printf("请输入新的站点名称: ");
+					cin >> point_name_change;
+					cout << "你确定需要将 " << bus_point[i].sta_name << "站 的名字换成 " << point_name_change << "站 吗?(Y or N) ";
+					cin >> YN;
+					if(YN == 'Y' || YN == 'y') {
+						// 进行两处的名字修改
+						bus_point[i].sta_name = point_name_change; // 1、站点中的名字修改
+						for(int i = 0;i < line_of_bus; i++) { // 2、路线中站点名字的修改
+							for(int j = 0;j < bus_line[i].size(); j++) {
+								if(bus_line[i][j].sta_name == point_name) {
+									bus_line[i][j].sta_name = point_name_change;
 								}
-								else printf("已取消距离更新!\n");
+							}
+						}
+						printf("修改站点名称成功!\n");
+					}
+					else printf("已取消更名\n");
+				}
+					
+					
+				if(choose == 2) {
+					string point_name_next;
+					int len; 
+					printf("请输入另一个站点的名称: ");
+					cin >> point_name_next;
+					for(int j = 0;j < bus_point.size(); j++) { // 遍历寻找下一个点的编号
+						if(point_name_next == bus_point[j].sta_name) {
+							if(mp[i][j] == inf) { // 两点之间的距离为无穷大，即并不相邻
+								printf("这两个站并不相邻, 如果想要建立联系, 请另外增加公交线路!\n");
+								break;
+							}
+							for(int k = 0;k < road_line.size(); k++) { // 遍历道路信息
+								if((road_line[k].Left.sta_name == point_name && road_line[k].Right.sta_name == point_name_next) || (road_line[k].Right.sta_name == point_name && road_line[k].Left.sta_name == point_name_next)) { // 找到这两个点所在的道路
+									printf("请输入这两个站点的更新距离: ");
+									cin >> len;
+									cout << "你确定需要将 " << point_name << "站 到 " << point_name_next << "站 的距离更新为 " << len << " 吗? (Y or N) ";
+									cin >> YN;
+									if(YN == 'Y' || YN == 'y') {
+										road_line[k].cost = len;
+										mp[i][j] = len; mp[j][i] = len;
+										printf("距离更新成功!\n");
+									}
+									else printf("已取消距离更新!\n");
+								}
 							}
 						}
 					}
 				}
-			}
 			
+			}
+		
 		}
+		if(!is_found) {
+			printf("没有找到这个站点,请重新输入\n");
+		}
+		else break;
 	}
+	
 }
 
 
@@ -465,9 +466,8 @@ void del_point_init(int pos) {
 void del_point() { // 删除站点
 	string point_name;
 	printf("输入需要删除站点的名称: ");
-	while(1) {
-		cin >> point_name;
-		int check = check_point_exist(point_name);
+	while(cin >> point_name) {
+		int check = check_point_exist(point_name); // 判断点是否存在
 		if(!check) {
 			printf("抱歉, 系统中没有找到这个点, 请重新输入\n");
 		}
@@ -476,6 +476,7 @@ void del_point() { // 删除站点
 	
 	bool can_del = 1;
 	for(int i = 0;i < road_line.size(); i++) {
+		// 判断道路中这个点是否与其他点有联系
 		if(road_line[i].Left.sta_name == point_name || road_line[i].Right.sta_name == point_name) {
 			printf("这个点与其他站点还具有关联, 不能删除!\n");
 			can_del = 0;
@@ -485,28 +486,28 @@ void del_point() { // 删除站点
 	
 	if(can_del) {
 		for(int i = 0;i < bus_point.size(); i++) {
-			if(bus_point[i].sta_name == point_name) {
-				bus_point.erase(bus_point.begin()+i);
-				del_point_init(i);
-				num_of_sta--;
+			if(bus_point[i].sta_name == point_name) { // 第i个站点为即将删除的站点
+				bus_point.erase(bus_point.begin()+i); // 删除第i个站点
+				del_point_init(i); // 将后面的站点序号向前移动一位
+				num_of_sta--; // 站点总数--
 				cout << point_name << "站 删除成功!" << endl;
 			}
 		}
 	}
 }
 
-void add_point() {
+void add_point() { // 添加站点
 	string line_name, add_name;
 	int line_num, pos;
-	struct Bus_line bl;
-	struct Bus_point bp;
-	struct Road_line rl;
+	struct Bus_line bl; // 存储公交线路
+	struct Bus_point bp; // 存储站点信息
+	struct Road_line rl; // 存储线路信息
 	
 	/***************添加进入公交线路***************/
 	
 	printf("请输入你需要在哪条路线上添加站点: ");
 	cin >> line_name;
-	for(int i = 0;i < line_of_bus; i++) {
+	for(int i = 1;i <= line_of_bus; i++) { // 寻找公交车序号
 		if(name_hash[i] == line_name) {
 			line_num = i;
 			break;
@@ -514,53 +515,57 @@ void add_point() {
 	}
 	
 	printf("你需要把站点放在第几个位置: ");
-	cin >> pos; pos--;
+	cin >> pos; pos--; // 站点是从第0个开始的 所以需要减1
 	
 	printf("请输入你需要添加站点的名称:");
 	cin >> add_name;
 	bl.sta_name = add_name;
 	bl.sta_num = pos;
-	bus_line[line_num].insert(bus_line[line_num].begin()+pos, bl);
-	for(int i = pos+1;i < bus_line[line_num].size(); i++) bus_line[line_num][i].sta_num++;
+	bus_line[line_num].insert(bus_line[line_num].begin()+pos, bl); // 在第pos处将bl这个站点添加进线路
+	for(int i = pos+1;i < bus_line[line_num].size(); i++) bus_line[line_num][i].sta_num++; // 将第pos后的站点序号向后移动一位
 	
 	/***************添加进入站点***************/
-	bp.sta_name = add_name;
-	bp.bus_num.push_back(line_name);
-	bp.sta_num = num_of_sta++;
-	bus_point.push_back(bp);
+	bp.sta_name = add_name; // 站点名称添加
+	bp.bus_num.push_back(line_name); // 站点添加可以经过的线路
+	bp.sta_num = num_of_sta++; // 添加站点序号，并且将总站点数量加1
+	bus_point.push_back(bp); // 将结构体信息存入站点
 	
 	/***************添加进入道路***************/
 	char YN;
 	string point_name;
 	string point_name_left, point_name_right;
 	int Left, Right;
+	bool exit1 = 0, exit2 = 0;
 	
 	printf("站点左端是否连接有车? (Y or N)");
 	cin >> YN;
 	if(YN == 'Y' || YN == 'y') {
+		exit1 = 1;
 		rl.Right = bp;
 		Right = bp.sta_num;
 		printf("请输入这个车站的名称: ");
 		cin >> point_name;
 		point_name_left = point_name;
-		for(int i = 0;i < bus_point.size(); i++) {
+		for(int i = 0;i < bus_point.size(); i++) { // 寻找输入点的序号
 			if(bus_point[i].sta_name == point_name) {
-				rl.Left = bus_point[i];
+				rl.Left = bus_point[i]; // 添加到新加点的左边
 				Left = bus_point[i].sta_num;
 				break;
 			}
 		}
 		printf("请输入这两个个站点的距离: ");
 		cin >> rl.cost;
-		rl.road_num = road_line.size();
-		road_line.push_back(rl);
-		mp[Left][Right] = rl.cost; mp[Right][Left] = rl.cost;
+		rl.road_num = road_line.size(); // 为这条路添加编号
+		road_line.push_back(rl); // 加入到道路信息中去
+		mp[Left][Right] = rl.cost; mp[Right][Left] = rl.cost; // 添加到图
 	}
+	else puts("OK!");
 	
-	
+	// 右边添加与左边同理
 	printf("站点右端是否连接有车? (Y or N)");
 	cin >> YN;
 	if(YN == 'Y' || YN == 'y') {
+		exit2 = 1;
 		rl.Left = bp;
 		Left = bp.sta_num;
 		printf("请输入这个车站的名称: ");
@@ -579,35 +584,29 @@ void add_point() {
 		road_line.push_back(rl);
 		mp[Left][Right] = rl.cost; mp[Right][Left] = rl.cost;
 	}
+	else puts("OK!");
 	
-	for(int i = 0;i < road_line.size(); i++) {
-		if((point_name_left == road_line[i].Left.sta_name && point_name_right == road_line[i].Right.sta_name) || (point_name_left == road_line[i].Right.sta_name && point_name_right == road_line[i].Left.sta_name)) {
-			road_line.erase(road_line.begin()+i);
+	if(exit1 && exit2) {// 如果新添加的点既有左边的点又有右边的点，那么需要删除原来本来连接的一条边
+		for(int i = 0;i < road_line.size(); i++) { 
+			if((point_name_left == road_line[i].Left.sta_name && point_name_right == road_line[i].Right.sta_name) || (point_name_left == road_line[i].Right.sta_name && point_name_right == road_line[i].Left.sta_name)) {
+				road_line.erase(road_line.begin()+i);
+			}
 		}
 	}
-
+	
 	// 重新建图
-	for(int i = 0;i < 100; i++) {
-		for(int j = 0;j < 100; j++) {
-			mp[i][j] = inf;
-		}
-	}
-	for(int i = 0;i < road_line.size(); i++) {
-			mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
-			mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
-	}
+	init_map();
 }
 
 
-
-void del_line() {
+void del_line() { // 删除线路
 	string line_name;
 	int line_name_num;
 	char YN;
 	printf("请输入需要删除的线路: ");
 	cin >> line_name;
 	
-	for(int i = 1;i <= line_of_bus; i++) {
+	for(int i = 1;i <= line_of_bus; i++) { // 找到公交线对应的序号
 		if(name_hash[i] == line_name) {
 			line_name_num = i; 
 			break;
@@ -617,10 +616,11 @@ void del_line() {
 	printf("请再次确认是否需要删除这条线路? (Y or N) ");
 	cin >> YN;
 	if(YN == 'Y' || YN == 'y') {
+		// 一一解除两两路线的道路关联
 		string fir, sec;
-		fir = bus_line[line_name_num][0].sta_name;
-		for(int i = 1;i < bus_line[line_name_num].size(); i++) {
-			sec = bus_line[line_name_num][i].sta_name;
+		fir = bus_line[line_name_num][0].sta_name; // 设为解除两两站点关系的第一个
+		for(int i = 1;i < bus_line[line_name_num].size(); i++) { // 一一枚举下去
+			sec = bus_line[line_name_num][i].sta_name; // 第二个设置为第一个的后面
 			
 			// 寻找在 fir 和 sec 这两个站点所在的路
 			for(int j = 0;j < road_line.size(); j++) {
@@ -640,8 +640,7 @@ void del_line() {
 					} 
 				}
 			}
-			fir = sec;
-			
+			fir = sec; // 更新第一个站点
 		}
 		// 从其他存储中删除这条线路信息
 		name_hash.erase(line_name_num);
@@ -662,22 +661,14 @@ void del_line() {
 		}
 		
 		// 重新建图
-		for(int i = 0;i < 100; i++) {
-			for(int j = 0;j < 100; j++) {
-				mp[i][j] = inf;
-			}
-		}
-		for(int i = 0;i < road_line.size(); i++) {
-				mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
-				mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
-		}
+		init_map();
 		printf("删除线路成功!\n");
 	}
 	else printf("已取消删除公交线路\n");
 }
 
 
-void add_line() {
+void add_line() { // 添加线路
 	string new_line, pre_sta, new_sta;
 	int new_sta_num, pre_sta_num;
 	struct Bus_line bl;
@@ -741,15 +732,7 @@ void add_line() {
 	}
 	
 	// 重新建图
-	for(int i = 0;i < 100; i++) {
-		for(int j = 0;j < 100; j++) {
-			mp[i][j] = inf;
-		}
-	}
-	for(int i = 0;i < road_line.size(); i++) {
-			mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
-			mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
-	}
+	init_map();
 	
 }
 
@@ -875,15 +858,7 @@ void change_line() {
 	}
 	
 	// 重新建图
-	for(int i = 0;i < 100; i++) {
-		for(int j = 0;j < 100; j++) {
-			mp[i][j] = inf;
-		}
-	}
-	for(int i = 0;i < road_line.size(); i++) {
-			mp[road_line[i].Left.sta_num][road_line[i].Right.sta_num] = road_line[i].cost;
-			mp[road_line[i].Right.sta_num][road_line[i].Left.sta_num] = road_line[i].cost;
-	}
+	init_map();
 }
 
 
@@ -1018,7 +993,7 @@ int main() {
 	while(1) {
 		int t = go();
 		if(t == 0) {
-			output_file();
+			input_file();
 			break;
 		} 
 	}
